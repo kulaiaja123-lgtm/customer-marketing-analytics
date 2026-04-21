@@ -1,0 +1,17 @@
+# ============================================
+# CUSTOMER MARKETING ANALYTICS
+# Requirements (Compatible with Python 3.14)
+# ============================================
+
+# --- Data Processing ---
+pandas
+numpy
+openpyxl          # Untuk baca/tulis Excel
+
+# --- Visualization ---
+matplotlib
+seaborn
+plotly            # Interactive charts
+
+# --- Dashboard ---
+streamlit
