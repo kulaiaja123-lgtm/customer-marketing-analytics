@@ -15,3 +15,7 @@ plotly            # Interactive charts
 
 # --- Dashboard ---
 streamlit
+
+# --- Machine Learning ---
+scikit-learn
+joblib
