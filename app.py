@@ -237,11 +237,11 @@ st.divider()
 # ============================================
 # INSIGHTS & RECOMMENDATIONS
 # ============================================
-st.subheader("💡 Key Insights & Recommendations")
+st.subheader("Key Insights & Recommendations")
 
 st.markdown("""
 <div class="insight-box">
-    <h4>🔍 Key Findings:</h4>
+    <h4>Key Findings:</h4>
     <ul>
         <li><b>Wine</b> dominates spending ($680K+), followed by <b>Meat Products</b></li>
         <li><b>High Income</b> customers have higher response rates but represent only ~25%</li>
@@ -249,11 +249,11 @@ st.markdown("""
         <li>Customers with <b>0-1 children</b> spend significantly more than those with 2+</li>
         <li><b>Response rate 14.9%</b> indicates room for campaign optimization</li>
     </ul>
-    
-    <h4>🎯 Recommendations:</h4>
+
+    <h4>Recommendations:</h4>
     <ul>
         <li><b>Target High-Income + High-Spender</b> with premium wine & meat campaigns</li>
-        <li><b>Invest in Catalog Channel</b> for high-value customer acquisition</li>
+        <li><b>Invest in Catalog channel</b> for high-value customer acquisition</li>
         <li><b>Create "Family-Friendly" bundles</b> for customers with 2+ children</li>
         <li><b>Re-engage low-spender high-income</b> customers with personalized offers</li>
         <li><b>A/B test campaign timing</b> based on Recency data</li>
