@@ -17,6 +17,44 @@ st.set_page_config(
 )
 
 # ============================================
+# CUSTOM CSS
+# ============================================
+st.markdown("""
+<style>
+.main-header {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #1E3A8A;
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.insight-box {
+    background-color: #f0f2f6;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 10px 0;
+    border-left: 5px solid #1E3A8A;
+}
+
+.insight-box h4 {
+    color: #1E3A8A;
+    margin-top: 0;
+}
+
+.insight-box ul, .insight-box ol {
+    margin-bottom: 0;
+}
+
+.stMetric {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 8px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ============================================
 # LOAD DATA
 # ============================================
 @st.cache_data
@@ -36,7 +74,6 @@ df = load_data()
 # ============================================
 st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2922/2922506.png", width=100)
 st.sidebar.title("🔧 Filter Data")
-
 
 # Filter Income
 income_filter = st.sidebar.multiselect(
@@ -83,6 +120,11 @@ df_filtered = df[
     (df['Age'] >= age_min) &
     (df['Age'] <= age_max)
 ]
+
+# Cek apakah data kosong setelah filtering
+if len(df_filtered) == 0:
+    st.warning("⚠️ Tidak ada data yang cocok dengan filter yang dipilih. Silakan ubah filter.")
+    st.stop()
 
 # ============================================
 # HEADER
@@ -182,8 +224,9 @@ with col_left2:
     
     ax.set_ylabel('Response Rate (%)')
     ax.set_title('Campaign Response Rate by Income Category')
-    ax.axhline(y=14.9, color='red', linestyle='--', alpha=0.5, label='Overall Average')
+    ax.axhline(y=response_rate, color='red', linestyle='--', alpha=0.5, label=f'Overall Average: {response_rate:.1f}%')
     ax.legend()
+    plt.xticks(rotation=45)
     st.pyplot(fig)
 
 with col_right2:
@@ -198,6 +241,7 @@ with col_right2:
     ax.set_title('Customer Distribution by Marital Status & Children')
     ax.legend(title='Children', bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.xticks(rotation=45)
+    plt.tight_layout()
     st.pyplot(fig)
 
 st.divider()
@@ -222,26 +266,29 @@ for col, channel, name in zip([col_ch1, col_ch2, col_ch3, col_ch4], channels, ch
 channel_data = df_filtered[channels].sum()
 channel_data.index = channel_names
 
-fig, ax = plt.subplots(figsize=(10, 5))
-colors = ['#3498db', '#9b59b6', '#1abc9c', '#e67e22']
-wedges, texts, autotexts = ax.pie(channel_data.values, labels=channel_data.index, 
-                                    autopct='%1.1f%%', colors=colors, startangle=90)
-for autotext in autotexts:
-    autotext.set_color('white')
-    autotext.set_fontweight('bold')
-ax.set_title('Purchase Channel Distribution')
-st.pyplot(fig)
+if channel_data.sum() > 0:
+    fig, ax = plt.subplots(figsize=(10, 5))
+    colors = ['#3498db', '#9b59b6', '#1abc9c', '#e67e22']
+    wedges, texts, autotexts = ax.pie(channel_data.values, labels=channel_data.index, 
+                                        autopct='%1.1f%%', colors=colors, startangle=90)
+    for autotext in autotexts:
+        autotext.set_color('white')
+        autotext.set_fontweight('bold')
+    ax.set_title('Purchase Channel Distribution')
+    st.pyplot(fig)
+else:
+    st.info("Tidak ada data pembelian untuk ditampilkan")
 
 st.divider()
 
 # ============================================
 # INSIGHTS & RECOMMENDATIONS
 # ============================================
-st.subheader("Key Insights & Recommendations")
+st.subheader("💡 Key Insights & Recommendations")
 
 st.markdown("""
 <div class="insight-box">
-    <h4>Key Findings:</h4>
+    <h4>🔍 Key Findings:</h4>
     <ul>
         <li><b>Wine</b> dominates spending ($680K+), followed by <b>Meat Products</b></li>
         <li><b>High Income</b> customers have higher response rates but represent only ~25%</li>
@@ -249,15 +296,15 @@ st.markdown("""
         <li>Customers with <b>0-1 children</b> spend significantly more than those with 2+</li>
         <li><b>Response rate 14.9%</b> indicates room for campaign optimization</li>
     </ul>
-
-    <h4>Recommendations:</h4>
-    <ul>
+    
+    <h4>🎯 Recommendations:</h4>
+    <ol>
         <li><b>Target High-Income + High-Spender</b> with premium wine & meat campaigns</li>
-        <li><b>Invest in Catalog channel</b> for high-value customer acquisition</li>
+        <li><b>Invest in Catalog Channel</b> for high-value customer acquisition</li>
         <li><b>Create "Family-Friendly" bundles</b> for customers with 2+ children</li>
         <li><b>Re-engage low-spender high-income</b> customers with personalized offers</li>
         <li><b>A/B test campaign timing</b> based on Recency data</li>
-    </ul>
+    </ol>
 </div>
 """, unsafe_allow_html=True)
 
@@ -266,28 +313,26 @@ st.divider()
 # ============================================
 # ML PREDICTION SECTION
 # ============================================
-st.divider()
 st.subheader("🤖 AI Prediction: Will This Customer Respond?")
 
-import joblib
-
 try:
+    import joblib
     model = joblib.load('response_predictor.pkl')
     
     with st.expander("🔮 Predict Customer Response"):
         col1, col2 = st.columns(2)
         
         with col1:
-            pred_age = st.number_input("Age", 18, 100, 45)
-            pred_income = st.number_input("Income ($)", 0, 200000, 75000)
-            pred_children = st.number_input("Children", 0, 5, 1)
-            pred_spending = st.number_input("Total Spending ($)", 0, 5000, 1200)
+            pred_age = st.number_input("Age", min_value=18, max_value=100, value=45)
+            pred_income = st.number_input("Income ($)", min_value=0, max_value=200000, value=75000)
+            pred_children = st.number_input("Children", min_value=0, max_value=5, value=1)
+            pred_spending = st.number_input("Total Spending ($)", min_value=0, max_value=5000, value=1200)
         
         with col2:
-            pred_purchases = st.number_input("Total Purchases", 0, 50, 15)
-            pred_recency = st.number_input("Recency (days)", 0, 365, 30)
-            pred_web = st.number_input("Web Purchases", 0, 20, 5)
-            pred_catalog = st.number_input("Catalog Purchases", 0, 20, 8)
+            pred_purchases = st.number_input("Total Purchases", min_value=0, max_value=50, value=15)
+            pred_recency = st.number_input("Recency (days)", min_value=0, max_value=365, value=30)
+            pred_web = st.number_input("Web Purchases", min_value=0, max_value=20, value=5)
+            pred_catalog = st.number_input("Catalog Purchases", min_value=0, max_value=20, value=8)
         
         if st.button("🔮 Predict"):
             input_data = pd.DataFrame([{
@@ -314,7 +359,9 @@ try:
                 st.error(f"❌ TIDAK RESPON (Confidence: {prob[0][0]*100:.1f}%)")
                 
 except FileNotFoundError:
-    st.info("📝 Run 'python 05_ml_prediction.py' first to train the model")
+    st.info("📝 Model prediksi belum tersedia. Jalankan 'python 05_ml_prediction.py' terlebih dahulu untuk melatih model.")
+except Exception as e:
+    st.warning(f"⚠️ Model tidak dapat dimuat: {str(e)}")
 
 # ============================================
 # DATA TABLE
@@ -326,15 +373,21 @@ display_cols = ['Id', 'Age', 'Income', 'Income_Category', 'Total_Spending',
                 'Spending_Category', 'Total_Purchases', 'Total_Children',
                 'Response', 'Complain', 'Recency']
 
+# Pastikan kolom yang diminta ada di dataframe
+available_cols = [col for col in display_cols if col in df_filtered.columns]
+
 # Format currency
-st.dataframe(
-    df_filtered[display_cols].style.format({
-        'Income': '${:,.0f}',
-        'Total_Spending': '${:,.0f}'
-    }),
-    use_container_width=True,
-    height=400
-)
+try:
+    st.dataframe(
+        df_filtered[available_cols].style.format({
+            'Income': '${:,.0f}',
+            'Total_Spending': '${:,.0f}'
+        }),
+        use_container_width=True,
+        height=400
+    )
+except Exception as e:
+    st.dataframe(df_filtered[available_cols], use_container_width=True, height=400)
 
 # ============================================
 # DOWNLOAD
@@ -354,28 +407,31 @@ with col_dl1:
 
 with col_dl2:
     # Excel dengan multiple sheets
-    import io
-    buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-        df_filtered.to_excel(writer, sheet_name='Filtered Data', index=False)
+    try:
+        import io
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+            df_filtered.to_excel(writer, sheet_name='Filtered Data', index=False)
+            
+            # Summary sheet
+            summary = pd.DataFrame({
+                'Metric': ['Total Customers', 'Avg Income', 'Avg Spending', 'Response Rate', 'Avg Age'],
+                'Value': [len(df_filtered), 
+                         f"${df_filtered['Income'].mean():,.0f}",
+                         f"${df_filtered['Total_Spending'].mean():,.0f}",
+                         f"{df_filtered['Response'].mean()*100:.1f}%",
+                         f"{df_filtered['Age'].mean():.0f}"]
+            })
+            summary.to_excel(writer, sheet_name='Summary', index=False)
         
-        # Summary sheet
-        summary = pd.DataFrame({
-            'Metric': ['Total Customers', 'Avg Income', 'Avg Spending', 'Response Rate', 'Avg Age'],
-            'Value': [len(df_filtered), 
-                     f"${df_filtered['Income'].mean():,.0f}",
-                     f"${df_filtered['Total_Spending'].mean():,.0f}",
-                     f"{df_filtered['Response'].mean()*100:.1f}%",
-                     f"{df_filtered['Age'].mean():.0f}"]
-        })
-        summary.to_excel(writer, sheet_name='Summary', index=False)
-    
-    st.download_button(
-        "📊 Download Report (Excel)",
-        buffer.getvalue(),
-        "customer_analysis_report.xlsx",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+        st.download_button(
+            "📊 Download Report (Excel)",
+            buffer.getvalue(),
+            "customer_analysis_report.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    except Exception as e:
+        st.warning(f"Excel export tidak tersedia: {str(e)}")
 
 # ============================================
 # FOOTER
