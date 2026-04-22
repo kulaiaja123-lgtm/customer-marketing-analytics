@@ -251,13 +251,13 @@ st.markdown("""
     </ul>
     
     <h4>🎯 Recommendations:</h4>
-    <ol>
+    <ul>
         <li><b>Target High-Income + High-Spender</b> with premium wine & meat campaigns</li>
         <li><b>Invest in Catalog Channel</b> for high-value customer acquisition</li>
         <li><b>Create "Family-Friendly" bundles</b> for customers with 2+ children</li>
         <li><b>Re-engage low-spender high-income</b> customers with personalized offers</li>
         <li><b>A/B test campaign timing</b> based on Recency data</li>
-    </ol>
+    </ul>
 </div>
 """, unsafe_allow_html=True)
 
