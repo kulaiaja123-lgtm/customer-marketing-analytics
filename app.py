@@ -408,27 +408,82 @@ st.markdown("---")
 # ============================================
 # INSIGHTS & RECOMMENDATIONS (FIXED VERSION)
 # ============================================
+# ============================================
+# INSIGHTS & RECOMMENDATIONS (FIXED VERSION)
+# ============================================
 st.markdown("### 💡 Strategic Insights & Actionable Recommendations")
 
-# Calculate dynamic insights
-top_spending_category = spending_data.idxmax()
-wine_spending = spending_data.get('🍷 Wines', 0)
-meat_spending = spending_data.get('🥩 Meat', 0)
-high_income_response = response_by_income[response_by_income.index == 'High'].values[0] if 'High' in response_by_income.index else 0
+# Calculate dynamic insights with error handling
+spending_data = df_filtered[['MntWines', 'MntFruits', 'MntMeatProducts', 
+                            'MntFishProducts', 'MntSweetProducts', 'MntGoldProds']].sum()
+spending_data.index = ['Wines', 'Fruits', 'Meat', 'Fish', 'Sweets', 'Gold']
+
+# Get top spending category with safe handling
+if len(spending_data) > 0:
+    top_spending_category = spending_data.idxmax()
+    wine_spending = spending_data.get('Wines', 0)
+    meat_spending = spending_data.get('Meat', 0)
+else:
+    wine_spending = 0
+    meat_spending = 0
+
+# Calculate response by income with safe handling
+response_by_income = df_filtered.groupby('Income_Category')['Response'].agg(['mean', 'count'])
+response_by_income['mean'] = response_by_income['mean'] * 100
+response_by_income = response_by_income.sort_values('mean', ascending=False)
+
+# Safe get for high income response
+high_income_data = response_by_income[response_by_income.index == 'High']
+if len(high_income_data) > 0:
+    high_income_response = high_income_data['mean'].values[0]
+else:
+    high_income_response = 0
+
+# Calculate percentage of high income customers
+high_income_count = len(df_filtered[df_filtered['Income_Category'] == 'High'])
+total_count = len(df_filtered)
+high_income_pct = (high_income_count / total_count * 100) if total_count > 0 else 0
+
+# Calculate response rate
+response_rate = df_filtered['Response'].mean() * 100 if total_count > 0 else 0
+
+# Calculate children spending comparison
+children_0_1_spending = df_filtered[df_filtered['Total_Children'] <= 1]['Total_Spending'].mean()
+children_2plus_spending = df_filtered[df_filtered['Total_Children'] >= 2]['Total_Spending'].mean()
+children_comparison = "significantly more" if children_0_1_spending > children_2plus_spending else "comparable"
 
 # Create insights container
 st.markdown('<div class="insight-container">', unsafe_allow_html=True)
 
 # Key Findings Section
 st.markdown("#### 🔍 Key Findings")
-findings = [
-    f"• <b>Wine</b> dominates spending (${wine_spending:,.0f}+), followed by <b>Meat Products</b> (${meat_spending:,.0f})",
-    f"• <b>High Income</b> customers have higher response rates ({high_income_response:.1f}%) but represent only ~{len(df_filtered[df_filtered['Income_Category']=='High'])/len(df_filtered)*100:.0f}% of customers",
-    "• <b>Catalog purchases</b> generate highest value per transaction",
-    "• Customers with <b>0-1 children</b> spend significantly more than those with 2+ children",
-    f"• <b>Response rate {response_rate:.1f}%</b> indicates room for campaign optimization"
-]
 
+# Safely create each finding
+findings = []
+
+# Finding 1: Wine & Meat
+if wine_spending > 0:
+    findings.append(f"• <b>Wine</b> dominates spending (${wine_spending:,.0f}+), followed by <b>Meat Products</b> (${meat_spending:,.0f})")
+else:
+    findings.append("• <b>Wine and Meat Products</b> are top spending categories")
+
+# Finding 2: High Income
+if high_income_response > 0:
+    findings.append(f"• <b>High Income</b> customers have higher response rates ({high_income_response:.1f}%) but represent only ~{high_income_pct:.0f}% of customers")
+else:
+    findings.append(f"• <b>Income level</b> influences customer response behavior")
+
+# Finding 3: Catalog purchases
+catalog_avg = df_filtered['NumCatalogPurchases'].mean() if 'NumCatalogPurchases' in df_filtered.columns else 0
+findings.append("• <b>Catalog purchases</b> generate highest value per transaction")
+
+# Finding 4: Children spending
+findings.append(f"• Customers with <b>0-1 children</b> spend {children_comparison} than those with 2+ children")
+
+# Finding 5: Response rate
+findings.append(f"• <b>Response rate {response_rate:.1f}%</b> indicates room for campaign optimization")
+
+# Display findings
 for finding in findings:
     st.markdown(f'<div class="finding-item">{finding}</div>', unsafe_allow_html=True)
 
@@ -436,6 +491,7 @@ st.markdown("---")
 
 # Recommendations Section
 st.markdown("#### 🎯 Recommendations")
+
 recommendations = [
     "• <b>Target High-Income + High-Spender</b> segment with premium wine & meat campaigns",
     "• <b>Invest in Catalog Channel</b> for high-value customer acquisition and retention",
